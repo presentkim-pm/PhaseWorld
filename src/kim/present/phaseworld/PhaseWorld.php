@@ -27,10 +27,7 @@ declare(strict_types=1);
 
 namespace kim\present\phaseworld;
 
-use kim\present\phaseworld\command\PhaseWorldInstanceCreateCommand;
-use kim\present\phaseworld\command\PhaseWorldInstanceListCommand;
-use kim\present\phaseworld\command\PhaseWorldTemplateListCommand;
-use kim\present\phaseworld\command\PhaseWorldTemplateReloadCommand;
+use kim\present\phaseworld\command\PhaseWorldCommand;
 use kim\present\phaseworld\data\TemplateData;
 use kim\present\phaseworld\data\TemplateDataEnum;
 use kim\present\phaseworld\task\AsyncDirectoryDeleteTask;
@@ -50,7 +47,6 @@ final class PhaseWorld extends PluginBase{
     public const PHASE_INSTANCE_DIR = ".phase_instance/";
 
     /** @var array<string, TemplateData> template name => template data */
-
     private array $worldTemplates = [];
 
     /** @var array<string, string> instance_id => template_name */
@@ -82,12 +78,7 @@ final class PhaseWorld extends PluginBase{
             }
         ), 1);
 
-        $this->getServer()->getCommandMap()->registerAll($this->getName(), [
-            new PhaseWorldTemplateReloadCommand($this),
-            new PhaseWorldTemplateListCommand($this),
-            new PhaseWorldInstanceCreateCommand($this),
-            new PhaseWorldInstanceListCommand($this)
-        ]);
+        $this->getServer()->getCommandMap()->register($this->getName(), new PhaseWorldCommand($this));
     }
 
     public function loadTemplatesFromDirectory(string $dir) : void{
