@@ -34,6 +34,7 @@ use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\command\utils\InvalidCommandSyntaxException;
 use pocketmine\player\Player;
+use pocketmine\Server;
 use pocketmine\utils\TextFormat;
 use RoMo\CommandCore\command\parameter\EnumParameter;
 use RoMo\CommandCore\CommandCore;
@@ -74,7 +75,18 @@ final class PhaseWorldInstanceCreateCommand extends Command{
             return;
         }
 
-        $this->plugin->createInstance($sender, $templateName);
+        $worldName = $this->plugin->createInstance($templateName);
+        if($worldName === null){
+            $sender->sendMessage(TextFormat::RED . "Failed to create instance.");
+            return;
+        }
+
+        $sender->sendMessage(TextFormat::GREEN . "Instance created to: $worldName");
+        if($sender instanceof Player){
+            $world = Server::getInstance()->getWorldManager()->getWorldByName($worldName);
+            $sender->teleport($world->getSafeSpawn());
+            $sender->sendMessage(TextFormat::GRAY . "Teleported to instance.");
+        }
     }
 
     public function sendTemplateListForm(Player $player) : void{
@@ -92,7 +104,16 @@ final class PhaseWorldInstanceCreateCommand extends Command{
 
             $response = yield from $form->send($player);
             if($response !== null && isset($templates[$response])){
-                $this->plugin->createInstance($player, $templateNames[$response]);
+                $worldName = $this->plugin->createInstance($templateNames[$response]);
+                if($worldName === null){
+                    $player->sendMessage(TextFormat::RED . "Failed to create instance.");
+                    return;
+                }
+
+                $player->sendMessage(TextFormat::GREEN . "Instance created to: $worldName");
+                $world = Server::getInstance()->getWorldManager()->getWorldByName($worldName);
+                $player->teleport($world->getSafeSpawn());
+                $player->sendMessage(TextFormat::GRAY . "Teleported to instance.");
             }
         });
     }

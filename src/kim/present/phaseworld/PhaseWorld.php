@@ -35,13 +35,10 @@ use kim\present\phaseworld\data\TemplateData;
 use kim\present\phaseworld\data\TemplateDataEnum;
 use kim\present\phaseworld\task\AsyncDirectoryDeleteTask;
 use kim\present\phaseworld\world\PhaseProviderEntry;
-use pocketmine\command\CommandSender;
-use pocketmine\player\Player;
 use pocketmine\plugin\PluginBase;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
-use pocketmine\utils\TextFormat;
 use pocketmine\utils\Utils;
 use pocketmine\world\format\io\ChunkData;
 use pocketmine\world\format\io\WorldProviderManagerEntry;
@@ -120,7 +117,14 @@ final class PhaseWorld extends PluginBase{
         }
     }
 
-    public function createInstance(CommandSender $sender, string $templateName) : void{
+    /**
+     * Create phase world instance from template name.
+     *
+     * @param string $templateName
+     *
+     * @return string|null If create successfully, it returns world name, or null
+     */
+    public function createInstance(string $templateName) : ?string{
         // Generate a unique ID for the instance
         $instanceId = $templateName . "#" . substr(hash('sha256', (string) mt_rand()), 0, 12);
 
@@ -134,26 +138,16 @@ final class PhaseWorld extends PluginBase{
 
         // create directory
         if(!mkdir($instancePath)){
-            $sender->sendMessage(TextFormat::RED . "Failed to create instance directory.");
-            return;
+            return null;
         }
 
         // Load the world
-
-        $wm = $this->getServer()->getWorldManager();
-        if($wm->loadWorld($worldName)){
-            $this->instances[$worldName] = $templateName;
-            $sender->sendMessage(TextFormat::GREEN . "Instance created: $instanceId");
-            $world = $wm->getWorldByName($worldName);
-            if($world){
-                if($sender instanceof Player){
-                    $sender->teleport($world->getSafeSpawn());
-                    $sender->sendMessage(TextFormat::GRAY . "Teleported to instance.");
-                }
-            }
-        }else{
-            $sender->sendMessage(TextFormat::RED . "Failed to load world instance.");
+        if(!$this->getServer()->getWorldManager()->loadWorld($worldName)){
+            return null;
         }
+
+        $this->instances[$worldName] = $templateName;
+        return $worldName;
     }
 
     public function removeInstance(string $worldName) : void{
