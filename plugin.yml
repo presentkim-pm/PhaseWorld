@@ -1,8 +1,16 @@
 ---
-name: PluginName
-main: authorname\pluginname\Main
-version: 0.1.0
+name: PhaseWorld
+main: kim\present\phaseworld\PhaseWorld
+version: 0.0.1
 api: [ 5.0.0 ]
-author: AuthorName
-description: Description of Plugin
+author: PresentKim
+description: "High-performance virtual world instance loader with zero-IO instantiation and memory caching."
+load: STARTUP
+permissions:
+  phaseworld.command:
+    default: op
+    description: "Allows using PhaseWorld commands"
+virions:
+  - SOF3/await-generator/master
+  - presentkim-pm/libasynform/1.2.1
 ...
