@@ -122,8 +122,7 @@ final class PhaseWorld extends PluginBase{
 
     public function createInstance(CommandSender $sender, string $templateName) : void{
         // Generate a unique ID for the instance
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $instanceId = $templateName . "#" . bin2hex(random_bytes(8));
+        $instanceId = $templateName . "#" . substr(hash('sha256', (string) mt_rand()), 0, 12);
 
         // Use relative path to hide it in .phase_instance folder
         $worldName = self::PHASE_INSTANCE_DIR . $instanceId;
