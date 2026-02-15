@@ -45,9 +45,9 @@ final class PhaseWorld extends PluginBase{
     use SingletonTrait;
 
     public const PHASE_INSTANCE_DIR = ".phase_instance/";
-    public const PHASE_DATA_JSON = "/phase_mark.json";
 
     /** @var array<string, TemplateData> template name => template data */
+
     private array $worldTemplates = [];
 
     /** @var array<string, string> instance_id => template_name */
@@ -117,7 +117,7 @@ final class PhaseWorld extends PluginBase{
     public function createInstance(CommandSender $sender, string $templateName) : void{
         // Generate a unique ID for the instance
         /** @noinspection PhpUnhandledExceptionInspection */
-        $instanceId = "$templateName#" . bin2hex(random_bytes(8));
+        $instanceId = $templateName . "#" . bin2hex(random_bytes(8));
 
         // Use relative path to hide it in .phase_instance folder
         $worldName = self::PHASE_INSTANCE_DIR . $instanceId;
@@ -133,11 +133,8 @@ final class PhaseWorld extends PluginBase{
             return;
         }
 
-        // create marker
-        $marker = ["template" => $templateName, "created" => time()];
-        file_put_contents($instancePath . PhaseWorld::PHASE_DATA_JSON, json_encode($marker));
-
         // Load the world
+
         $wm = $this->getServer()->getWorldManager();
         if($wm->loadWorld($worldName)){
             $this->instances[$worldName] = $templateName;

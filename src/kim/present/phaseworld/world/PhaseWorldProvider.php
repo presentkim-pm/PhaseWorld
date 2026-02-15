@@ -40,22 +40,11 @@ final class PhaseWorldProvider implements WritableWorldProvider{
         private readonly string $path,
         private readonly PhaseWorld $plugin
     ){
-        $markerPath = $path . PhaseWorld::PHASE_DATA_JSON;
-        if(!file_exists($markerPath)){
-            throw new \RuntimeException("PhaseLoader marker missing: $markerPath");
+        $parts = explode("#", basename($path));
+        if(count($parts) !== 2){
+            throw new \RuntimeException("Invalid PhaseWorld path format: $path");
         }
-
-        $json = file_get_contents($markerPath);
-        if($json === false){
-            throw new \RuntimeException("Failed to read marker: $markerPath");
-        }
-
-        $data = json_decode($json, true);
-        $templateName = $data['template'] ?? null;
-
-        if(!$templateName){
-            throw new \RuntimeException("Invalid PhaseLoader marker content in $path");
-        }
+        $templateName = $parts[0];
 
         $this->template = $this->plugin->getTemplate($templateName);
         if($this->template === null){

@@ -27,7 +27,23 @@ use pocketmine\world\format\io\WorldProviderManagerEntry;
 
 final class PhaseProviderEntry extends WorldProviderManagerEntry{
     public function __construct(private readonly PhaseWorld $plugin){
-        parent::__construct(fn(string $path) : bool => file_exists($path . PhaseWorld::PHASE_DATA_JSON));
+        parent::__construct(function(string $path) use ($plugin) : bool{
+            // Normalize path separators
+            $normalizedPath = str_replace("\\", "/", $path);
+            
+            // Check directory constraint
+            if(!str_contains($normalizedPath, PhaseWorld::PHASE_INSTANCE_DIR)){
+                return false;
+            }
+            
+            // Check name pattern: template#id
+            $parts = explode("#", basename($path));
+            if(count($parts) !== 2){
+                return false;
+            }
+            
+            return $plugin->getTemplate($parts[0]) !== null;
+        });
     }
 
     public function fromPath(string $path, \Logger $logger) : WorldProvider{
