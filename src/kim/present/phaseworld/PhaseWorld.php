@@ -134,6 +134,7 @@ final class PhaseWorld extends PluginBase{
 
         // Load the world
         if(!$this->getServer()->getWorldManager()->loadWorld($worldName)){
+            $this->getServer()->getAsyncPool()->submitTask(new AsyncDirectoryDeleteTask($instancePath));
             return null;
         }
 
