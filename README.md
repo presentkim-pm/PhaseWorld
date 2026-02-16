@@ -119,6 +119,6 @@ if(Server::getInstance()->getWorldManager()->loadWorld($relativePath)){
 *   **Volatile Only**: Changes made in an instance are discarded when the world is unloaded.
 *   **Memory Usage**: Templates are cached in RAM. Large worlds will consume significant memory.
 
-## 📝 License
+## License
 
-This project is licensed under the MIT License.
+Distributed under the **LGPL 3.0**. See [LICENSE][license-url] for more information
