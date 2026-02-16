@@ -4,31 +4,43 @@
 
 ## 🚀 Key Features
 
-*   **Zero-IO Instantiation**: Creates world instances without copying region files. Only a lightweight dummy folder is created.
-*   **Lazy Loading**: Templates are opened lazily and chunks are loaded on-demand, significantly reducing startup time and memory usage.
-*   **Instant Loading**: Instances load instantly because chunks are deep-cloned from memory/provider cache.
-*   **Volatile**: Changes in instances are **never** saved to disk. When an instance is unloaded or the server stops, all data is lost and the dummy folder is automatically cleaned up.
-*   **Async Cleanup**: Stale instance folders are deleted asynchronously to prevent main thread lag.
+* **Zero-IO Instantiation**: Creates world instances without copying region files. Only a lightweight dummy folder is
+  created.
+* **Lazy Loading**: Templates are opened lazily and chunks are loaded on-demand, significantly reducing startup time and
+  memory usage.
+* **Instant Loading**: Instances load instantly because chunks are deep-cloned from memory/provider cache.
+* **Volatile**: Changes in instances are **never** saved to disk. When an instance is unloaded or the server stops, all
+  data is lost and the dummy folder is automatically cleaned up.
+* **Async Cleanup**: Stale instance folders are deleted asynchronously to prevent main thread lag.
+
+## Downloads
+
+### Download from [Github Releases][releases-url]
+
+[![Github Downloads][release-badge]][releases-url]
 
 ## 🛠 Installation & Usage
 
-1.  Put the `PhaseWorld` plugin into your `plugins` folder.
-2.  Start the server. A `plugin_data/PhaseWorld/templates/` directory will be created.
-3.  Place your template world folders (e.g., `lobby_template`, `game_map`) inside `plugin_data/PhaseWorld/templates/`.
-4.  Restart the server or run `/phaseworld reload`. PhaseWorld automatically loads all valid worlds in the `templates` directory into memory.
+1. Put the `PhaseWorld` plugin into your `plugins` folder.
+2. Start the server. A `plugin_data/PhaseWorld/templates/` directory will be created.
+3. Place your template world folders (e.g., `lobby_template`, `game_map`) inside `plugin_data/PhaseWorld/templates/`.
+4. Restart the server or run `/phaseworld reload`. PhaseWorld automatically loads all valid worlds in the `templates`
+   directory into memory.
 
 ### Commands
 
-*   `/phaseworld list [template|instance]`: List loaded templates or active instances.
-*   `/phaseworld create <template_name>`: Create a new instance from a template and teleport to it.
-*   `/phaseworld reload`: Manually reload a template world from the `plugin_data/templates/` directory.
+* `/phaseworld list [template|instance]`: List loaded templates or active instances.
+* `/phaseworld create <template_name>`: Create a new instance from a template and teleport to it.
+* `/phaseworld reload`: Manually reload a template world from the `plugin_data/templates/` directory.
 
 ## 🧩 API for Developers
 
 PhaseWorld provides a simple API to manage templates and instances programmatically.
 
 ### Main Class
+
 Access the main instance:
+
 ```php
 use kim\present\phaseworld\PhaseWorld;
 
@@ -36,14 +48,18 @@ $plugin = PhaseWorld::getInstance();
 ```
 
 ### Loading a Template
+
 Templates are automatically loaded from the `templates` folder. You can also load one manually:
+
 ```php
 // Load 'worlds/my_map' as template 'arena_1'
 $success = $plugin->loadTemplate("arena_1", $plugin->getServer()->getDataPath() . "worlds/my_map");
 ```
 
 ### Creating an Instance
+
 To create a new world instance:
+
 ```php
 use pocketmine\Server;
 use pocketmine\player\Player;
@@ -63,13 +79,18 @@ if ($worldName !== null) {
 ```
 
 ### Cleaning Up
-Instances are automatically removed when the server stops. You can also remove them manually (this unloads the world and deletes the folder asynchronously):
+
+Instances are automatically removed when the server stops. You can also remove them manually (this unloads the world and
+deletes the folder asynchronously):
+
 ```php
 $plugin->removeInstance($worldName);
 ```
 
 ### Events
-You can listen for `PhaseWorldInstanceCreateEvent` to handle logic immediately after an instance is created (e.g., initializing a minigame).
+
+You can listen for `PhaseWorldInstanceCreateEvent` to handle logic immediately after an instance is created (e.g.,
+initializing a minigame).
 
 ```php
 use kim\present\phaseworld\event\PhaseWorldInstanceCreateEvent;
@@ -86,7 +107,9 @@ class MyListener implements Listener {
 ```
 
 ### Custom Instance Creation (Advanced)
-If you want to create an instance manually without using `PhaseWorld::createInstance` (e.g., for custom naming or management):
+
+If you want to create an instance manually without using `PhaseWorld::createInstance` (e.g., for custom naming or
+management):
 
 ```php
 use kim\present\phaseworld\PhaseWorld;
@@ -111,13 +134,13 @@ if(Server::getInstance()->getWorldManager()->loadWorld($relativePath)){
 
 ## 📂 Directory Structure
 
-*   `plugin_data/PhaseWorld/templates/`: Place your original world files here.
-*   `worlds/.phase_instance/`: This is where active instances live. **Do not modify this manually.**
+* `plugin_data/PhaseWorld/templates/`: Place your original world files here.
+* `worlds/.phase_instance/`: This is where active instances live. **Do not modify this manually.**
 
 ## ⚠️ Limitations
 
-*   **Volatile Only**: Changes made in an instance are discarded when the world is unloaded.
-*   **Memory Usage**: Templates are cached in RAM. Large worlds will consume significant memory.
+* **Volatile Only**: Changes made in an instance are discarded when the world is unloaded.
+* **Memory Usage**: Templates are cached in RAM. Large worlds will consume significant memory.
 
 ## License
 
