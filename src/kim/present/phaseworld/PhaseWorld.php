@@ -30,6 +30,7 @@ namespace kim\present\phaseworld;
 use kim\present\phaseworld\command\PhaseWorldCommand;
 use kim\present\phaseworld\data\TemplateData;
 use kim\present\phaseworld\data\TemplateDataEnum;
+use kim\present\phaseworld\event\PhaseWorldInstanceCreateEvent;
 use kim\present\phaseworld\task\AsyncDirectoryDeleteTask;
 use kim\present\phaseworld\world\PhaseProviderEntry;
 use pocketmine\plugin\PluginBase;
@@ -139,6 +140,12 @@ final class PhaseWorld extends PluginBase{
         }
 
         $this->instances[$worldName] = $templateName;
+
+        $world = $this->getServer()->getWorldManager()->getWorldByName($worldName);
+        if($world !== null){
+            (new PhaseWorldInstanceCreateEvent($world, $templateName))->call();
+        }
+
         return $worldName;
     }
 

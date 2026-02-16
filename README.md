@@ -68,6 +68,23 @@ Instances are automatically removed when the server stops. You can also remove t
 $plugin->removeInstance($worldName);
 ```
 
+### Events
+You can listen for `PhaseWorldInstanceCreateEvent` to handle logic immediately after an instance is created (e.g., initializing a minigame).
+
+```php
+use kim\present\phaseworld\event\PhaseWorldInstanceCreateEvent;
+use pocketmine\event\Listener;
+
+class MyListener implements Listener {
+    public function onPhaseCreate(PhaseWorldInstanceCreateEvent $event) : void {
+        $world = $event->getWorld();
+        $templateName = $event->getTemplateName();
+        
+        // Initialize game logic for this world instance
+    }
+}
+```
+
 ### Custom Instance Creation (Advanced)
 If you want to create an instance manually without using `PhaseWorld::createInstance` (e.g., for custom naming or management):
 
