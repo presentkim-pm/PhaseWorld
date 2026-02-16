@@ -1,28 +1,5 @@
 <?php
 
-/**
- *  ____                           _   _  ___
- * |  _ \ _ __ ___  ___  ___ _ __ | |_| |/ (_)_ __ ___
- * | |_) | '__/ _ \/ __|/ _ \ '_ \| __| ' /| | '_ ` _ \
- * |  __/| | |  __/\__ \  __/ | | | |_| . \| | | | | | |
- * |_|   |_|  \___||___/\___|_| |_|\__|_|\_\_|_| |_| |_|
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * @author       PresentKim (debe3721@gmail.com)
- * @link         https://github.com/PresentKim
- * @license      https://www.gnu.org/licenses/lgpl-3.0 LGPL-3.0 License
- *
- *   (\ /)
- *  ( . .) ♥
- *  c(")(")
- *
- * @noinspection PhpUnused
- */
-
 declare(strict_types=1);
 
 namespace kim\present\phaseworld;
@@ -39,8 +16,6 @@ use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
 use pocketmine\world\format\io\ChunkData;
-use pocketmine\world\format\io\WorldProviderManagerEntry;
-use pocketmine\world\World;
 
 final class PhaseWorld extends PluginBase{
     use SingletonTrait;
@@ -82,6 +57,13 @@ final class PhaseWorld extends PluginBase{
         $this->getServer()->getCommandMap()->register($this->getName(), new PhaseWorldCommand($this));
     }
 
+    protected function onDisable() : void{
+        foreach($this->worldTemplates as $template){
+            $template->close();
+        }
+        $this->worldTemplates = [];
+    }
+
     public function loadTemplatesFromDirectory(string $dir) : void{
         foreach(array_diff(scandir($dir), ['.', '..']) as $file){
             $path = $dir . $file;
@@ -109,18 +91,8 @@ final class PhaseWorld extends PluginBase{
         }
     }
 
-    /**
-     * Create phase world instance from template name.
-     *
-     * @param string $templateName
-     *
-     * @return string|null If create successfully, it returns world name, or null
-     */
     public function createInstance(string $templateName) : ?string{
-        // Generate a unique ID for the instance
         $instanceId = $templateName . "#" . substr(hash('sha256', (string) mt_rand()), 0, 12);
-
-        // Use relative path to hide it in .phase_instance folder
         $worldName = self::PHASE_INSTANCE_DIR . $instanceId;
         $instancePath = $this->getServer()->getDataPath() . "worlds/" . $worldName;
 
@@ -128,12 +100,10 @@ final class PhaseWorld extends PluginBase{
             mkdir(dirname($instancePath), 0777, true);
         }
 
-        // create directory
         if(!mkdir($instancePath)){
             return null;
         }
 
-        // Load the world
         if(!$this->getServer()->getWorldManager()->loadWorld($worldName)){
             $this->getServer()->getAsyncPool()->submitTask(new AsyncDirectoryDeleteTask($instancePath));
             return null;
@@ -176,8 +146,6 @@ final class PhaseWorld extends PluginBase{
             return false;
         }
 
-        // Use the first matching provider
-        /** @var WorldProviderManagerEntry $entry */
         $entry = reset($matching);
 
         try{
@@ -187,28 +155,16 @@ final class PhaseWorld extends PluginBase{
             return false;
         }
 
-        $this->getLogger()->info("Caching template '$name' from '$path'...");
-        $chunks = [];
-        $count = 0;
-
-        // Iterate all chunks
-        // getAllChunks returns generator with key=[x, z] and value=LoadedChunkData
-        foreach($provider->getAllChunks(true, $this->getLogger()) as $xz => $chunkData){
-            [$x, $z] = $xz;
-            $chunks[World::chunkHash($x, $z)] = self::cloneChunkData($chunkData->getData());
-            $count++;
-        }
+        $this->getLogger()->info("Opened template '$name' from '$path'. (Lazy Loading)");
 
         $this->worldTemplates[$name] = new TemplateData(
+            $provider,
             clone $provider->getWorldData(),
-            $chunks,
             $provider->getWorldMinY(),
             $provider->getWorldMaxY()
         );
         TemplateDataEnum::getInstance()->register($name);
 
-        $provider->close();
-        $this->getLogger()->info("Cached $count chunks for template '$name'.");
         return true;
     }
 
@@ -225,7 +181,6 @@ final class PhaseWorld extends PluginBase{
         return $this->instances;
     }
 
-    /** @return array<string, TemplateData> template name => template data */
     public function getTemplates() : array{
         return $this->worldTemplates;
     }

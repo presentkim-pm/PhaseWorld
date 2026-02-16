@@ -5,8 +5,8 @@
 ## 🚀 Key Features
 
 *   **Zero-IO Instantiation**: Creates world instances without copying region files. Only a lightweight dummy folder is created.
-*   **Memory Caching**: Template worlds are loaded entirely into RAM (chunks, NBT, settings).
-*   **Instant Loading**: Instances load instantly because chunks are deep-cloned from memory.
+*   **Lazy Loading**: Templates are opened lazily and chunks are loaded on-demand, significantly reducing startup time and memory usage.
+*   **Instant Loading**: Instances load instantly because chunks are deep-cloned from memory/provider cache.
 *   **Volatile**: Changes in instances are **never** saved to disk. When an instance is unloaded or the server stops, all data is lost and the dummy folder is automatically cleaned up.
 *   **Async Cleanup**: Stale instance folders are deleted asynchronously to prevent main thread lag.
 

@@ -33,7 +33,6 @@ use pocketmine\world\format\io\ChunkData;
 use pocketmine\world\format\io\LoadedChunkData;
 use pocketmine\world\format\io\WorldData;
 use pocketmine\world\format\io\WritableWorldProvider;
-use pocketmine\world\World;
 
 final class PhaseWorldProvider implements WritableWorldProvider{
     private ?TemplateData $template = null;
@@ -118,15 +117,13 @@ final class PhaseWorldProvider implements WritableWorldProvider{
             return;
         }
 
-        foreach($this->template->getChunks() as $hash => $chunkData){
-            $x = null;
-            $z = null;
-            World::getXZ($hash, $x, $z);
-            yield [$x, $z] => new LoadedChunkData(PhaseWorld::cloneChunkData($chunkData), false, 0);
+        foreach($this->template->getAllChunks() as $xz => $chunkData){
+            [$x, $z] = $xz;
+            yield [$x, $z] => new LoadedChunkData(PhaseWorld::cloneChunkData($chunkData->getData()), false, 0);
         }
     }
 
     public function calculateChunkCount() : int{
-        return $this->template ? count($this->template->getChunks()) : 0;
+        return $this->template ? $this->template->calculateChunkCount() : 0;
     }
 }
