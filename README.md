@@ -1,6 +1,28 @@
-# PhaseWorld
+<!-- PROJECT BADGES -->
+<div align="center">
 
-**PhaseWorld** is a high-performance virtual world instance loader for PocketMine-MP. It is designed to create temporary, volatile world instances from a template with near-zero disk I/O and instant loading times.
+![Version][version-badge]
+[![Stars][stars-badge]][stars-url]
+[![License][license-badge]][license-url]
+
+</div>
+
+
+<!-- PROJECT LOGO -->
+<br />
+<div align="center">
+  <img src="https://raw.githubusercontent.com/presentkim-pm/PhaseWorld/main/assets/icon.png" alt="Logo" width="80" height="80">
+  <h3>PhaseWorld</h3>
+  <p align="center">
+    An plugin that high-performance virtual world instance loader with zero chunk file IO instantiation and memory caching.
+
+[Contact to me][author-discord] · [Report a bug][issues-url] · [Request a feature][issues-url]
+
+  </p>
+</div>
+
+
+<!-- ABOUT THE PROJECT -->
 
 ## 🚀 Key Features
 
@@ -145,3 +167,25 @@ if(Server::getInstance()->getWorldManager()->loadWorld($relativePath)){
 ## License
 
 Distributed under the **LGPL 3.0**. See [LICENSE][license-url] for more information
+
+-----
+
+[author-discord]: https://discordapp.com/users/345772340279508993
+
+[version-badge]: https://img.shields.io/github/v/release/presentkim-pm/PhaseWorld?display_name=tag&style=for-the-badge&label=VERSION
+
+[release-badge]: https://img.shields.io/github/downloads/presentkim-pm/PhaseWorld/total?style=for-the-badge&label=GITHUB%20
+
+[stars-badge]: https://img.shields.io/github/stars/presentkim-pm/PhaseWorld.svg?style=for-the-badge
+
+[license-badge]: https://img.shields.io/github/license/presentkim-pm/PhaseWorld.svg?style=for-the-badge
+
+[stars-url]: https://github.com/presentkim-pm/PhaseWorld/stargazers
+
+[releases-url]: https://github.com/presentkim-pm/PhaseWorld/releases
+
+[issues-url]: https://github.com/presentkim-pm/PhaseWorld/issues
+
+[license-url]: https://github.com/presentkim-pm/PhaseWorld/blob/main/LICENSE
+
+[project-icon]: https://raw.githubusercontent.com/presentkim-pm/PhaseWorld/main/assets/icon.png
