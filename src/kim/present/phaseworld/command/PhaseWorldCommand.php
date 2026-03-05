@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace kim\present\phaseworld\command;
 
+use kim\present\cameraapi\Camera;
 use kim\present\libasynform\SimpleForm;
 use kim\present\phaseworld\data\TemplateDataEnum;
 use kim\present\phaseworld\PhaseWorld;
@@ -37,6 +38,7 @@ use pocketmine\network\mcpe\protocol\types\command\CommandHardEnum;
 use pocketmine\player\Player;
 use pocketmine\Server;
 use pocketmine\utils\TextFormat;
+use pocketmine\world\World;
 use RoMo\CommandCore\command\parameter\EnumParameter;
 use RoMo\CommandCore\command\parameter\OneEnumParameter;
 use RoMo\CommandCore\CommandCore;
@@ -122,7 +124,7 @@ final class PhaseWorldCommand extends Command{
         if($sender instanceof Player){
             $world = Server::getInstance()->getWorldManager()->getWorldByName($worldName);
             if($world){
-                $sender->teleport($world->getSafeSpawn());
+                $this->teleportWithCamera($sender, $world);
                 $sender->sendMessage(TextFormat::GRAY . "Teleported to instance.");
             }
         }
@@ -179,7 +181,7 @@ final class PhaseWorldCommand extends Command{
                 $player->sendMessage(TextFormat::GREEN . "Instance created to: $worldName");
                 $world = Server::getInstance()->getWorldManager()->getWorldByName($worldName);
                 if($world){
-                    $player->teleport($world->getSafeSpawn());
+                    $this->teleportWithCamera($player, $world);
                     $player->sendMessage(TextFormat::GRAY . "Teleported to instance.");
                 }
             }
@@ -204,10 +206,27 @@ final class PhaseWorldCommand extends Command{
                 $target = $instanceNames[$response];
                 $world = Server::getInstance()->getWorldManager()->getWorldByName($target);
                 if($world){
-                    $player->teleport($world->getSafeSpawn());
+                    $this->teleportWithCamera($player, $world);
                     $player->sendMessage(TextFormat::GREEN . "Teleported to $target");
                 }
             }
         });
+    }
+
+    /**
+     * Teleports the player to the given world's safe spawn with a short camera fade effect.
+     */
+    private function teleportWithCamera(Player $player, World $world) : void{
+        // Apply a quick fade transition using CameraAPI
+        if(class_exists(Camera::class)){
+            Camera::of($player)
+                  ->fade()
+                  ->in(0.3)
+                  ->stay(0.1)
+                  ->out(0.3)
+                  ->send();
+        }
+
+        $player->teleport($world->getSafeSpawn());
     }
 }

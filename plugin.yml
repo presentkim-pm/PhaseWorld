@@ -6,6 +6,7 @@ api: [ 5.0.0 ]
 author: PresentKim
 description: "High-performance virtual world instance loader with zero-IO instantiation and memory caching."
 load: STARTUP
+softdepend: [ CameraAPI ]
 permissions:
   phaseworld.command:
     default: op
