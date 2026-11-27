@@ -2,6 +2,7 @@
 <div align="center">
 
 ![Version][version-badge]
+[![Downloads][release-badge]][releases-url]
 [![Stars][stars-badge]][stars-url]
 [![License][license-badge]][license-url]
 
@@ -35,15 +36,25 @@
   data is lost and the dummy folder is automatically cleaned up.
 * **Async Cleanup**: Stale instance folders are deleted asynchronously to prevent main thread lag.
 
+## Requirements
+
+* [axolotl-pm/PocketMine-MP](https://github.com/axolotl-pm/PocketMine-MP) `5.51` or higher (`plugin.yml` `api: [5.51.0]`),
+  which uses BedrockProtocol 64 (Bedrock `1.26.60`).
+* PHP `8.4` or higher.
+* Optional: the [CameraAPI](https://github.com/presentkim-pm/CameraAPI) `2.0` plugin adds a fade effect when teleporting.
+* The version for the original [pmmp/PocketMine-MP](https://github.com/pmmp/PocketMine-MP) `5.42`+ is kept on the
+  [`legacy/pmmp-5.44`](https://github.com/presentkim-pm/PhaseWorld/tree/legacy/pmmp-5.44) branch.
+
 ## Downloads
 
-### Download from [Github Releases][releases-url]
+Download `PhaseWorld.phar` from [Github Releases][releases-url]. The libraries it uses (`presentkim/libasynform`,
+`sof3/await-generator`) are bundled into the phar.
 
-[![Github Downloads][release-badge]][releases-url]
+For development, `composer install` then `composer test` runs the PHPUnit tests.
 
 ## 🛠 Installation & Usage
 
-1. Put the `PhaseWorld` plugin into your `plugins` folder.
+1. Put `PhaseWorld.phar` into your `plugins` folder.
 2. Start the server. A `plugin_data/PhaseWorld/templates/` directory will be created.
 3. Place your template world folders (e.g., `lobby_template`, `game_map`) inside `plugin_data/PhaseWorld/templates/`.
 4. Restart the server or run `/phaseworld reload`. PhaseWorld automatically loads all valid worlds in the `templates`
@@ -53,7 +64,10 @@
 
 * `/phaseworld list [template|instance]`: List loaded templates or active instances.
 * `/phaseworld create <template_name>`: Create a new instance from a template and teleport to it.
-* `/phaseworld reload`: Manually reload a template world from the `plugin_data/templates/` directory.
+* `/phaseworld reload`: Load the template worlds that were added to `plugin_data/PhaseWorld/templates/` after the
+  server started (already loaded templates are kept).
+
+The command needs the `phaseworld.command` permission (default: op). Sub commands are not auto-completed by the client.
 
 ## 🧩 API for Developers
 
@@ -102,11 +116,15 @@ if ($worldName !== null) {
 
 ### Cleaning Up
 
-Instances are automatically removed when the server stops. You can also remove them manually (this unloads the world and
-deletes the folder asynchronously):
+Instances are removed automatically when their world is unloaded and when the server stops; stale instance folders
+left by a crash are deleted on the next start. To get rid of an instance yourself, unload its world, which deletes
+the instance folder asynchronously:
 
 ```php
-$plugin->removeInstance($worldName);
+$world = $plugin->getServer()->getWorldManager()->getWorldByName($worldName);
+if($world !== null){
+    $plugin->getServer()->getWorldManager()->unloadWorld($world, true);
+}
 ```
 
 ### Events
@@ -140,7 +158,7 @@ use pocketmine\Server;
 $templateName = "arena_1";
 // Generate a unique ID (format: template#uuid)
 // Note: PhaseWorld relies on the "template#id" format to identify the template!
-$instanceId = $templateName . "#" . bin2hex(random_bytes(8));
+$instanceId = $templateName . "#" . bin2hex(random_bytes(6));
 $relativePath = PhaseWorld::PHASE_INSTANCE_DIR . $instanceId;
 
 // 1. Create the directory structure (required for PMMP to recognize it as a world)
