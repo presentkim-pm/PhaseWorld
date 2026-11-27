@@ -30,15 +30,16 @@ namespace kim\present\phaseworld\world;
 use kim\present\phaseworld\data\TemplateData;
 use kim\present\phaseworld\PhaseWorld;
 use pocketmine\world\format\io\ChunkData;
+use pocketmine\world\format\io\data\BaseNbtWorldData;
 use pocketmine\world\format\io\LoadedChunkData;
 use pocketmine\world\format\io\WorldData;
 use pocketmine\world\format\io\WritableWorldProvider;
 
 final class PhaseWorldProvider implements WritableWorldProvider{
-    private ?TemplateData $template = null;
+    private ?TemplateData $template;
     private WorldData $worldData;
-    private int $minY = 0;
-    private int $maxY = 256;
+    private int $minY;
+    private int $maxY;
     private bool $closed = false;
 
     public function __construct(
@@ -57,11 +58,26 @@ final class PhaseWorldProvider implements WritableWorldProvider{
         }
 
         // Clone world data for this instance
-        $this->worldData = clone $this->template->getWorldData();
+        $this->worldData = self::cloneWorldData($this->template->getWorldData());
         $this->worldData->setName(basename($path));
 
         $this->minY = $this->template->getMinY();
         $this->maxY = $this->template->getMaxY();
+    }
+
+    /**
+     * Clones the template's world data for one instance.
+     *
+     * A plain `clone` is shallow: every clone would keep sharing the template's NBT compound, so renaming, the time,
+     * the weather or the spawn of one instance would change all the others (and the template itself).
+     */
+    public static function cloneWorldData(WorldData $source) : WorldData{
+        $clone = clone $source;
+        if($clone instanceof BaseNbtWorldData){
+            (new \ReflectionProperty(BaseNbtWorldData::class, "compoundTag"))
+                ->setValue($clone, clone $source->getCompoundTag());
+        }
+        return $clone;
     }
 
     public function getWorldMinY() : int{
@@ -87,7 +103,7 @@ final class PhaseWorldProvider implements WritableWorldProvider{
         }
 
         return new LoadedChunkData(
-            $this->plugin->cloneChunkData($chunk),
+            PhaseWorld::cloneChunkData($chunk),
             false,
             LoadedChunkData::FIXER_FLAG_NONE
         );

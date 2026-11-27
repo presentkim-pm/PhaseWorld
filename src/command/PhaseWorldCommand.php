@@ -29,19 +29,14 @@ namespace kim\present\phaseworld\command;
 
 use kim\present\cameraapi\Camera;
 use kim\present\libasynform\SimpleForm;
-use kim\present\phaseworld\data\TemplateDataEnum;
 use kim\present\phaseworld\PhaseWorld;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\command\utils\InvalidCommandSyntaxException;
-use pocketmine\network\mcpe\protocol\types\command\CommandHardEnum;
+use pocketmine\form\FormValidationException;
 use pocketmine\player\Player;
-use pocketmine\Server;
 use pocketmine\utils\TextFormat;
 use pocketmine\world\World;
-use RoMo\CommandCore\command\parameter\EnumParameter;
-use RoMo\CommandCore\command\parameter\OneEnumParameter;
-use RoMo\CommandCore\CommandCore;
 use SOFe\AwaitGenerator\Await;
 
 final class PhaseWorldCommand extends Command{
@@ -56,29 +51,10 @@ final class PhaseWorldCommand extends Command{
             ["phase"]
         );
         $this->setPermission("phaseworld.command");
-
-        if(class_exists(CommandCore::class)){
-            CommandCore::getInstance()->registerCommandOverload($this,
-                // Overload 1: list [type]
-                CommandCore::createOverload(
-                    new OneEnumParameter("list"),
-                    new EnumParameter("type", new CommandHardEnum("type", ["template", "instance"])),
-                ),
-                // Overload 2: create <template>
-                CommandCore::createOverload(
-                    new OneEnumParameter("create"),
-                    new EnumParameter("template", TemplateDataEnum::getInstance())
-                ),
-                // Overload 3: reload
-                CommandCore::createOverload(
-                    new OneEnumParameter("reload")
-                )
-            );
-        }
     }
 
     public function execute(CommandSender $sender, string $commandLabel, array $args) : void{
-        if(empty($args)){
+        if($args === []){
             throw new InvalidCommandSyntaxException();
         }
 
@@ -98,8 +74,9 @@ final class PhaseWorldCommand extends Command{
         }
     }
 
+    /** @param string[] $args */
     private function executeCreate(CommandSender $sender, array $args) : void{
-        if(empty($args[0])){
+        if(!isset($args[0]) || $args[0] === ""){
             if($sender instanceof Player){
                 $this->sendTemplateListForm($sender);
                 return;
@@ -122,14 +99,15 @@ final class PhaseWorldCommand extends Command{
 
         $sender->sendMessage(TextFormat::GREEN . "Instance created to: $worldName");
         if($sender instanceof Player){
-            $world = Server::getInstance()->getWorldManager()->getWorldByName($worldName);
-            if($world){
+            $world = $this->plugin->getServer()->getWorldManager()->getWorldByName($worldName);
+            if($world !== null){
                 $this->teleportWithCamera($sender, $world);
                 $sender->sendMessage(TextFormat::GRAY . "Teleported to instance.");
             }
         }
     }
 
+    /** @param string[] $args */
     private function executeList(CommandSender $sender, array $args) : void{
         $type = strtolower($args[0] ?? "");
         if($type === "template"){
@@ -143,7 +121,7 @@ final class PhaseWorldCommand extends Command{
             }else{
                 $sender->sendMessage(
                     TextFormat::YELLOW . "Active Instances: "
-                    . implode(", ", $this->plugin->getInstances())
+                    . implode(", ", array_keys($this->plugin->getInstances()))
                 );
             }
         }else{
@@ -158,7 +136,7 @@ final class PhaseWorldCommand extends Command{
 
     public function sendTemplateListForm(Player $player) : void{
         Await::f2c(function() use ($player){
-            $templates = PhaseWorld::getInstance()->getTemplates();
+            $templates = $this->plugin->getTemplates();
 
             $form = SimpleForm::create(
                 "Create Phase World Instance",
@@ -179,18 +157,18 @@ final class PhaseWorldCommand extends Command{
                 }
 
                 $player->sendMessage(TextFormat::GREEN . "Instance created to: $worldName");
-                $world = Server::getInstance()->getWorldManager()->getWorldByName($worldName);
-                if($world){
+                $world = $this->plugin->getServer()->getWorldManager()->getWorldByName($worldName);
+                if($world !== null){
                     $this->teleportWithCamera($player, $world);
                     $player->sendMessage(TextFormat::GRAY . "Teleported to instance.");
                 }
             }
-        });
+        }, null, [FormValidationException::class => static function() : void{}]);
     }
 
     public function sendInstanceListForm(Player $player) : void{
         Await::f2c(function() use ($player){
-            $instances = PhaseWorld::getInstance()->getInstances();
+            $instances = $this->plugin->getInstances();
 
             $form = SimpleForm::create(
                 "Phase World Instances",
@@ -204,13 +182,13 @@ final class PhaseWorldCommand extends Command{
             $response = yield from $form->send($player);
             if($response !== null && isset($instanceNames[$response])){
                 $target = $instanceNames[$response];
-                $world = Server::getInstance()->getWorldManager()->getWorldByName($target);
-                if($world){
+                $world = $this->plugin->getServer()->getWorldManager()->getWorldByName($target);
+                if($world !== null){
                     $this->teleportWithCamera($player, $world);
                     $player->sendMessage(TextFormat::GREEN . "Teleported to $target");
                 }
             }
-        });
+        }, null, [FormValidationException::class => static function() : void{}]);
     }
 
     /**

@@ -1,1 +1,4 @@
-.releases/
+/vendor/
+.phpunit.result.cache
+/.phpunit.cache/
+/.releases/

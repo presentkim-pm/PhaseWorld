@@ -29,13 +29,11 @@ namespace kim\present\phaseworld;
 
 use kim\present\phaseworld\command\PhaseWorldCommand;
 use kim\present\phaseworld\data\TemplateData;
-use kim\present\phaseworld\data\TemplateDataEnum;
 use kim\present\phaseworld\event\PhaseWorldInstanceCreateEvent;
 use kim\present\phaseworld\task\AsyncDirectoryDeleteTask;
 use kim\present\phaseworld\world\PhaseProviderEntry;
 use pocketmine\plugin\PluginBase;
 use pocketmine\scheduler\ClosureTask;
-use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
 use pocketmine\world\format\io\ChunkData;
@@ -48,7 +46,7 @@ final class PhaseWorld extends PluginBase{
     /** @var array<string, TemplateData> template name => template data */
     private array $worldTemplates = [];
 
-    /** @var array<string, string> instance_id => template_name */
+    /** @var array<string, string> world name (with the instance directory prefix) => template name */
     private array $instances = [];
 
     protected function onLoad() : void{
@@ -88,9 +86,17 @@ final class PhaseWorld extends PluginBase{
     }
 
     public function loadTemplatesFromDirectory(string $dir) : void{
-        foreach(array_diff(scandir($dir), ['.', '..']) as $file){
+        $files = scandir($dir);
+        if($files === false){
+            return;
+        }
+
+        foreach(array_diff($files, ['.', '..']) as $file){
             $path = $dir . $file;
             if(is_dir($path)){
+                if(isset($this->worldTemplates[strtolower($file)])){
+                    continue; // already loaded (e.g. on /phaseworld reload)
+                }
                 $this->getLogger()->info("Auto-loading template: $file");
                 if($this->loadTemplate($file, $path)){
                     $this->getLogger()->info("Loaded template: $file");
@@ -107,7 +113,12 @@ final class PhaseWorld extends PluginBase{
             return;
         }
 
-        foreach(array_diff(scandir($phaseBaseDir), ['.', '..']) as $file){
+        $files = scandir($phaseBaseDir);
+        if($files === false){
+            return;
+        }
+
+        foreach(array_diff($files, ['.', '..']) as $file){
             if(is_dir($phaseBaseDir . $file)){
                 $this->removeInstance($file);
             }
@@ -115,7 +126,7 @@ final class PhaseWorld extends PluginBase{
     }
 
     public function createInstance(string $templateName) : ?string{
-        $instanceId = $templateName . "#" . substr(hash('sha256', (string) mt_rand()), 0, 12);
+        $instanceId = $templateName . "#" . bin2hex(random_bytes(6));
         $worldName = self::PHASE_INSTANCE_DIR . $instanceId;
         $instancePath = $this->getServer()->getDataPath() . "worlds/" . $worldName;
 
@@ -142,12 +153,17 @@ final class PhaseWorld extends PluginBase{
         return $worldName;
     }
 
-    public function removeInstance(string $worldName) : void{
-        if(isset($this->instances[$worldName])){
-            unset($this->instances[$worldName]);
-        }
+    /**
+     * Forgets the instance and deletes its directory in the background.
+     *
+     * @param string $instanceName The instance directory name (`template#id`); a world name with the
+     *                             {@link PHASE_INSTANCE_DIR} prefix is accepted too.
+     */
+    public function removeInstance(string $instanceName) : void{
+        $instanceName = basename($instanceName);
+        unset($this->instances[self::PHASE_INSTANCE_DIR . $instanceName]);
 
-        $worldDir = $this->getServer()->getDataPath() . "worlds/" . self::PHASE_INSTANCE_DIR . $worldName;
+        $worldDir = $this->getServer()->getDataPath() . "worlds/" . self::PHASE_INSTANCE_DIR . $instanceName;
         if(is_dir($worldDir)){
             $this->getServer()->getAsyncPool()->submitTask(new AsyncDirectoryDeleteTask($worldDir));
         }
@@ -163,7 +179,7 @@ final class PhaseWorld extends PluginBase{
             return false;
         }
 
-        $matching = Server::getInstance()->getWorldManager()->getProviderManager()->getMatchingProviders($path);
+        $matching = $this->getServer()->getWorldManager()->getProviderManager()->getMatchingProviders($path);
         if(count($matching) === 0){
             $this->getLogger()->error("No suitable provider found for template path: $path");
             return false;
@@ -186,7 +202,6 @@ final class PhaseWorld extends PluginBase{
             $provider->getWorldMinY(),
             $provider->getWorldMaxY()
         );
-        TemplateDataEnum::getInstance()->register($name);
 
         return true;
     }
@@ -200,10 +215,12 @@ final class PhaseWorld extends PluginBase{
         );
     }
 
+    /** @return array<string, string> world name => template name */
     public function getInstances() : array{
         return $this->instances;
     }
 
+    /** @return array<string, TemplateData> template name => template data */
     public function getTemplates() : array{
         return $this->worldTemplates;
     }

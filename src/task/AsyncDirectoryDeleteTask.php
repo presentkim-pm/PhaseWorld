@@ -31,11 +31,7 @@ use pocketmine\scheduler\AsyncTask;
 
 final class AsyncDirectoryDeleteTask extends AsyncTask{
 
-    private string $dir;
-
-    public function __construct(string $dir){
-        $this->dir = $dir;
-    }
+    public function __construct(private readonly string $dir){}
 
     public function onRun() : void{
         $this->recursiveDelete($this->dir);
@@ -46,9 +42,14 @@ final class AsyncDirectoryDeleteTask extends AsyncTask{
             return;
         }
 
-        foreach(array_diff(scandir($dir), ['.', '..']) as $file){
+        $files = scandir($dir);
+        if($files === false){
+            return;
+        }
+
+        foreach(array_diff($files, ['.', '..']) as $file){
             $path = "$dir/$file";
-            if((is_dir($path))){
+            if(is_dir($path) && !is_link($path)){
                 $this->recursiveDelete($path);
             }else{
                 unlink($path);
